@@ -1,0 +1,21 @@
+application: wistful-whiskey
+module: default
+version: 1
+runtime: go
+api_version: go1
+
+handlers:
+
+- url: /scripts
+  static_dir: dist/scripts
+
+- url: /styles
+  static_dir: dist/styles
+
+- url: /.*
+  script: _go_app
+  login: required
+
+skip_files:
+  - ^node_modules$
+  - ^app$
