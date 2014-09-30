@@ -36,11 +36,12 @@ func handleGet(writer http.ResponseWriter, request *http.Request, namespace appe
 
 	query := datastore.NewQuery("Tasting")
 	keys, _ := query.GetAll(namespace, &tastings)
-	sort.Sort(ByDate(tastings))
-
+	
 	for i, key := range keys {
 		tastings[i].Key = key
 	}
+
+	sort.Sort(ByDate(tastings))
 	
 	response, _ := json.Marshal(tastings)
 	writer.Write(response)
@@ -57,6 +58,7 @@ func handlePost(writer http.ResponseWriter, request *http.Request, namespace app
 	    if err1 == nil {
 	        key := datastore.NewKey(namespace, "Tasting", "", 0, nil)
 			datastore.Put(namespace, key, &tasting)
+			tasting.Key = key
 			response, _ := json.Marshal(tasting)
 			writer.Write(response)
 	    } else {
@@ -73,6 +75,9 @@ func handleDelete(writer http.ResponseWriter, request *http.Request, namespace a
 	keyName = keyName[i+1:]
 	
 	key, err := datastore.DecodeKey(keyName)
+	var taste Tasting
+	err = datastore.Get(namespace, key, &taste)
+
 	err = datastore.Delete(namespace, key)
 	if err != nil {
 		namespace.Infof("Yuck", err);

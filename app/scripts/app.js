@@ -9,7 +9,29 @@ var Input = require('react-bootstrap').Input;
 
 var mountNode = document.getElementById('app');
 
-var tastingList = [];
+var eventDispatcher = {
+  deleteCallbacks: [],
+  addCallbacks: [],
+  deleteEvent: function (key) {
+    for (var i=0; i < this.deleteCallbacks.length; i++) {
+      this.deleteCallbacks[i](key);
+    }
+  },
+
+  onDeleteEvent: function (callback) {
+    this.deleteCallbacks.push(callback);
+  },
+
+  addEvent: function (data) {
+    for (var i=0; i < this.addCallbacks.length; i++) {
+      this.addCallbacks[i](data);
+    }
+  },
+
+  onAddEvent: function (callback) {
+    this.addCallbacks.push(callback);
+  }
+};
 
 var AddNewPanel = React.createClass({
   onCancel: function () {
@@ -34,7 +56,7 @@ var AddNewPanel = React.createClass({
       url: '/tastings/',
       data: JSON.stringify(newTasting),
       success: function (data) {
-          tastingList.shift(data);
+          eventDispatcher.addEvent(JSON.parse(data));
       }.bind(this),
         error: function (xhr, status, err) {
           console.error('onSave error');
@@ -82,7 +104,7 @@ var AddNewPanel = React.createClass({
               </tr>
               <tr>
                 <th>Rating</th>
-                <td><Input type="text" ref="rating" /></td>
+                <td><Input type="text" ref="rating"/></td>
               </tr>
             </tbody>
             
@@ -91,6 +113,35 @@ var AddNewPanel = React.createClass({
           <Button bsStyle="danger" onClick={this.onCancel}>Cancel</Button>
           <Button bsStyle="primary" onClick={this.onSave}>Save</Button>
           </Panel>
+    );
+  }
+});
+
+var DeleteButton = React.createClass({
+  getInitialState: function () {
+    return {key: ''};
+  },
+
+  componentWillMount: function () {
+    this.key = this.props.key;
+  },
+
+  handleDelete: function () {
+    $.ajax({
+      method: 'DELETE',
+      url: '/tastings/' + this.key,
+      success: function (data) {
+          eventDispatcher.deleteEvent(this.key);
+      }.bind(this),
+        error: function (xhr, status, err) {
+          console.error('handleDelete error');
+      }.bind(this)
+    });
+  },
+
+  render: function () {
+    return (
+        <Button bsStyle="danger" onClick={this.handleDelete}>Delete</Button>
     );
   }
 });
@@ -109,9 +160,29 @@ var WhiskeyApp = React.createClass({
     });
   },
 
+  onDeleteCallback: function(key) {
+    var index = -1;
+    for (var i = 0; i < this.state.items.length; i++) {
+      if (this.state.items[i].key === key) {
+        index = i;
+      }
+    }
+    if (index > -1) {
+      this.state.items.splice(index, 1);
+    }
+    this.forceUpdate();
+  },
+
+  onAddCallback: function(data) {
+
+    this.state.items.unshift(data);
+    this.forceUpdate();
+  },
+
   getInitialState: function () {
-    var items = tastingList;
-    return {items: items, text: ''};
+    eventDispatcher.onAddEvent(this.onAddCallback);
+    eventDispatcher.onDeleteEvent(this.onDeleteCallback);
+    return {items: [], text: ''};
   },
 
   onChange: function (e) {
@@ -127,35 +198,19 @@ var WhiskeyApp = React.createClass({
     React.renderComponent(<AddNewPanel/>, mountNode);
   },
 
-  handleDelete: function (key) {
-    $.ajax({
-      method: 'DELETE',
-      url: '/tastings/' + key,
-      success: function (data) {
-          var index = -1;
-          for (var i = 0; i < this.state.items.length; i++) {
-            if (this.state.items[i].key === key) {
-              index = i;
-            }
-          }
-          if (index > -1) {
-            this.state.items.splice(index, 1);
-          }
-      }.bind(this),
-        error: function (xhr, status, err) {
-          console.error('handleDelete error');
-      }.bind(this)
-    });
-  },
-
   render: function() {
     var gameNodes = this.state.items.map(function (item) {
+      var formattedDate = item.date.substring(0, 10);
       return (
             <Panel header={item.distillery + ' ' + item.name} key={item.key}>
             <Table striped bordered condensed hover>
               <tbody>
                 <tr>
-                  <th width="10%">Color</th>
+                  <th width="10%">Reviewed</th>
+                  <td>{formattedDate}</td>
+                </tr>
+                <tr>
+                  <th>Color</th>
                   <td>{item.color}</td>
                 </tr>
                 <tr>
@@ -176,11 +231,11 @@ var WhiskeyApp = React.createClass({
                 </tr>
                 <tr>
                   <th>Rating</th>
-                  <td>{item.rating}</td>
+                  <td>{item.rating} / 100</td>
                 </tr>
               </tbody>
             </Table>
-            <Button bsStyle="danger" disabled>Delete</Button>
+            <DeleteButton key={item.key}></DeleteButton>
             </Panel>
       );
     }.bind(this));
