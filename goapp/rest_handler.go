@@ -56,8 +56,8 @@ func handlePost(writer http.ResponseWriter, request *http.Request, namespace app
 	    err1 := json.Unmarshal(p, &tasting)
 	    tasting.Date = time.Now()
 	    if err1 == nil {
-	        key := datastore.NewKey(namespace, "Tasting", "", 0, nil)
-			datastore.Put(namespace, key, &tasting)
+	        key := datastore.NewIncompleteKey(namespace, "Tasting", nil)
+			key, _ = datastore.Put(namespace, key, &tasting)
 			tasting.Key = key
 			response, _ := json.Marshal(tasting)
 			writer.Write(response)
