@@ -12,6 +12,18 @@ import (
 	"appengine/user"
 )
 
+type UserC struct {
+	Email    string    `datastore:"email"`
+	Name     string    `datastore:"name"`
+	User_id  string    `datastore:"user_id"`
+	Active   time.Time `datastore:"active"`
+	Premeium bool      `datastore:"premeium"`
+	Deletes  int       `datastore: "deletes"`
+	Gets     int       `datastore: "gets"`
+	Adds     int       `datastore: "adds"`
+	Edits    int       `datastore: "edits"`
+}
+
 type Tasting struct {
 	Date              time.Time      `datastore:"date" json:"date"`
 	Name     		  string         `datastore:"name" json:"name"`
@@ -30,6 +42,37 @@ type ByDate []Tasting
 func (a ByDate) Len() int           { return len(a) }
 func (a ByDate) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByDate) Less(i, j int) bool { return !a[i].Date.Before(a[j].Date) }
+
+func updateUser(operation string, namespace appengine.Context) {
+	user := user.Current(namespace)
+	key := datastore.NewKey(namespace, "UserC", user.ID, 0, nil)
+	newUser := UserC{}
+	err := datastore.Get(namespace, key, &newUser)
+	if err != nil {
+		newUser = UserC{
+			Email: user.Email,
+			Name: user.String(),
+			User_id: user.ID,
+			Active: time.Now(),
+			Premeium: false,
+			Deletes: 0,
+			Adds: 0,
+			Gets: 0,
+			Edits: 0}
+	}
+
+	if operation == "GET" {
+        newUser.Gets += 1
+    } else if operation == "POST" {
+        newUser.Adds += 1
+    } else if operation == "DELETE" {
+        newUser.Deletes += 1
+    } else if operation == "PUT" {
+        newUser.Edits += 1
+    } 
+    newUser.Active = time.Now()
+    key, _ = datastore.Put(namespace, key, &newUser)
+}
 
 func handleGet(writer http.ResponseWriter, request *http.Request, namespace appengine.Context) {
 	var tastings []Tasting
@@ -108,6 +151,7 @@ func init() {
 
 func handleRequest(writer http.ResponseWriter, request *http.Request) {
 	context := appengine.NewContext(request)
+	updateUser(request.Method, context)
 	user := user.Current(context)
 	namespaceContext, _ := appengine.Namespace(context, user.ID)
 
