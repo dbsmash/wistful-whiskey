@@ -1,12 +1,16 @@
 /** @jsx React.DOM */
 
+'use strict';
+
 var React = require('react');
 var Accordion = require('react-bootstrap').Accordion;
 var Panel = require('react-bootstrap').Panel;
 var Table = require('react-bootstrap').Table;
 var Button = require('react-bootstrap').Button;
-var ButtonGroup = require('react-bootstrap').ButtonGroup;
+var ButtonToolbar = require('react-bootstrap').ButtonToolbar;
 var Input = require('react-bootstrap').Input;
+var DropdownButton = require('react-bootstrap').DropdownButton;
+var MenuItem = require('react-bootstrap').MenuItem;
 
 var TastingStore = {
   tastings: [],
@@ -30,8 +34,15 @@ var TastingStore = {
     }
   },
 
+  sort: function (sortProp) {
+    this.tastings.sort(function (a, b) {
+      return b[sortProp] < a[sortProp];
+    });
+    this.notifyConsumers('load', this.tastings);
+  },
+
   load: function () {
-    $.ajax({url:'/tastings/',
+    $.ajax({url: '/tastings/',
       type: 'GET',
       dataType: 'json',
       success: function (data) {
@@ -47,7 +58,7 @@ var TastingStore = {
     });
   },
 
-  deleteLocal: function(key) {
+  deleteLocal: function (key) {
     var index = -1;
     for (var i = 0; i < this.tastings.length; i++) {
       if (this.tastings[i].key === key) {
@@ -67,8 +78,8 @@ var TastingStore = {
       success: function (data) {
         this.deleteLocal(key);
       }.bind(this),
-        error: function (xhr, status, err) {
-          console.error('handleDelete error');
+      error: function (xhr, status, err) {
+        console.error('handleDelete error');
       }.bind(this)
     });
   },
@@ -84,10 +95,10 @@ var TastingStore = {
       url: '/tastings/',
       data: JSON.stringify(tasting),
       success: function (data) {
-          this.addLocal(JSON.parse(data));
+        this.addLocal(JSON.parse(data));
       }.bind(this),
-        error: function (xhr, status, err) {
-          console.error('onSave error');
+      error: function (xhr, status, err) {
+        console.error('onSave error');
       }.bind(this)
     });
   },
@@ -111,10 +122,10 @@ var TastingStore = {
       url: '/tastings/',
       data: JSON.stringify(tasting),
       success: function (data) {
-          this.editLocal(JSON.parse(data));
+        this.editLocal(JSON.parse(data));
       }.bind(this),
-        error: function (xhr, status, err) {
-          console.error('editRemote error');
+      error: function (xhr, status, err) {
+        console.error('editRemote error');
       }.bind(this)
     });
   }
@@ -187,8 +198,10 @@ var AddNewPanel = React.createClass({
             
           </Table>
           </form>
-          <Button bsStyle="danger" onClick={this.onCancel}>Cancel</Button>
-          <Button bsStyle="primary" onClick={this.onSave}>Save</Button>
+          <ButtonToolbar>
+            <Button bsStyle="primary" onClick={this.onSave}>Save</Button>
+            <Button bsStyle="danger" onClick={this.onCancel}>Cancel</Button>
+          </ButtonToolbar>
           </Panel>
     );
   }
@@ -262,8 +275,10 @@ var EditPanel = React.createClass({
             
           </Table>
           </form>
-          <Button bsStyle="danger" onClick={this.onCancel}>Cancel</Button>
-          <Button bsStyle="primary" onClick={this.onSave}>Save</Button>
+          <ButtonToolbar>
+            <Button bsStyle="primary" onClick={this.onSave}>Save</Button>
+            <Button bsStyle="danger" onClick={this.onCancel}>Cancel</Button>
+          </ButtonToolbar>
           </Panel>
     );
   }
@@ -341,6 +356,22 @@ var WhiskeyApp = React.createClass({
     React.renderComponent(<AddNewPanel/>, mountNode);
   },
 
+  sortByName: function () {
+    TastingStore.sort('name');
+  },
+
+  sortByDate: function () {
+    TastingStore.sort('date');
+  },
+
+  sortByDistillery: function () {
+    TastingStore.sort('distillery');
+  },
+
+  sortByRating: function () {
+    TastingStore.sort('rating');
+  },
+
   render: function() {
     var gameNodes = this.state.items.map(function (item) {
       var formattedDate = item.date.substring(0, 10);
@@ -378,9 +409,9 @@ var WhiskeyApp = React.createClass({
                 </tr>
               </tbody>
             </Table>
-            <ButtonGroup>
+            <ButtonToolbar>
             <EditButton item={item}></EditButton><DeleteButton key={item.key}></DeleteButton>
-            </ButtonGroup>
+            </ButtonToolbar>
             </Panel>
       );
     }.bind(this));
@@ -388,7 +419,16 @@ var WhiskeyApp = React.createClass({
     return (
       <div>
         <h3>Wistful Whiskey</h3>
-        <Button bsStyle="primary" onClick={this.addNew}>Add New Tasting</Button>
+        <ButtonToolbar>
+          <Button bsStyle="primary" onClick={this.addNew}>Add New Tasting</Button>
+          <DropdownButton bsStyle="primary" title="Sort...">
+            <MenuItem onClick={this.sortByName} key="1">Date</MenuItem>
+            <MenuItem onClick={this.sortByDate} key="2">Distillery</MenuItem>
+            <MenuItem onClick={this.sortByDistillery} key="3">Name</MenuItem>
+            <MenuItem onClick={this.sortByRating}key="4">Rating</MenuItem>
+          </DropdownButton>
+        </ButtonToolbar>
+
         <div id="new-tasting-panel"/>
         <div id="tasting-panel">
           <Accordion>
