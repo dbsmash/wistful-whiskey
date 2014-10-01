@@ -67,6 +67,24 @@ func handlePost(writer http.ResponseWriter, request *http.Request, namespace app
 	}
 }
 
+func handlePut(writer http.ResponseWriter, request *http.Request, namespace appengine.Context) {
+	p := make([]byte, request.ContentLength)    
+	_, err := request.Body.Read(p)
+
+	if err == nil {
+	    var tasting Tasting
+	    err1 := json.Unmarshal(p, &tasting)
+	    tasting.Date = time.Now()
+	    if err1 == nil {
+			datastore.Put(namespace, tasting.Key, &tasting)
+			response, _ := json.Marshal(tasting)
+			writer.Write(response)
+	    } else {
+	        namespace.Infof("Unable to unmarshall the JSON request", err1);
+	    }
+	}
+}
+
 func handleDelete(writer http.ResponseWriter, request *http.Request, namespace appengine.Context) {
 	keyName := request.URL.Path
 	i := strings.Index(keyName, "/")
@@ -99,7 +117,9 @@ func handleRequest(writer http.ResponseWriter, request *http.Request) {
         handlePost(writer, request, namespaceContext)
     } else if request.Method == "DELETE" {
         handleDelete(writer, request, namespaceContext)
-    }else {
+    } else if request.Method == "PUT" {
+        handlePut(writer, request, namespaceContext)
+    } else {
         http.Error(writer, "Invalid request method.", 405)
     }
 }

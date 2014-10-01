@@ -5,31 +5,118 @@ var Accordion = require('react-bootstrap').Accordion;
 var Panel = require('react-bootstrap').Panel;
 var Table = require('react-bootstrap').Table;
 var Button = require('react-bootstrap').Button;
+var ButtonGroup = require('react-bootstrap').ButtonGroup;
 var Input = require('react-bootstrap').Input;
 
-var mountNode = document.getElementById('app');
+var TastingStore = {
+  tastings: [],
+  callbacks: {
+    'add': [],
+    'edit': [],
+    'delete': [],
+    'search' : [],
+    'load': []
+  },
 
-var eventDispatcher = {
-  deleteCallbacks: [],
-  addCallbacks: [],
-  deleteEvent: function (key) {
-    for (var i=0; i < this.deleteCallbacks.length; i++) {
-      this.deleteCallbacks[i](key);
+  addConsumer: function (type, callback) {
+    var relevantCallbacks = this.callbacks[type];
+    relevantCallbacks.push(callback);
+  },
+
+  notifyConsumers: function (type, data) {
+    var relevantCallbacks = this.callbacks[type];
+    for (var i = 0; i < relevantCallbacks.length; i++) {
+      relevantCallbacks[i](data);
     }
   },
 
-  onDeleteEvent: function (callback) {
-    this.deleteCallbacks.push(callback);
+  load: function () {
+    $.ajax({url:'/tastings/',
+      type: 'GET',
+      dataType: 'json',
+      success: function (data) {
+        if (data === null) {
+          data = [];
+        }
+        this.tastings = data;
+        this.notifyConsumers('load', data);
+      }.bind(this),
+      error: function (xhr, status, err) {
+        console.error('loadTastingsFromServer error');
+      }.bind(this)
+    });
   },
 
-  addEvent: function (data) {
-    for (var i=0; i < this.addCallbacks.length; i++) {
-      this.addCallbacks[i](data);
+  deleteLocal: function(key) {
+    var index = -1;
+    for (var i = 0; i < this.tastings.length; i++) {
+      if (this.tastings[i].key === key) {
+        index = i;
+      }
     }
+    if (index > -1) {
+      this.tastings.splice(index, 1);
+    }
+    this.notifyConsumers('delete', this.tastings);
   },
 
-  onAddEvent: function (callback) {
-    this.addCallbacks.push(callback);
+  deleteRemote: function (key) {
+    $.ajax({
+      method: 'DELETE',
+      url: '/tastings/' + key,
+      success: function (data) {
+        this.deleteLocal(key);
+      }.bind(this),
+        error: function (xhr, status, err) {
+          console.error('handleDelete error');
+      }.bind(this)
+    });
+  },
+
+  addLocal: function (data) {
+    this.tastings.unshift(data);
+    this.notifyConsumers('add', this.tastings);
+  },
+
+  addRemote: function (tasting) {
+    $.ajax({
+      method: 'POST',
+      url: '/tastings/',
+      data: JSON.stringify(tasting),
+      success: function (data) {
+          this.addLocal(JSON.parse(data));
+      }.bind(this),
+        error: function (xhr, status, err) {
+          console.error('onSave error');
+      }.bind(this)
+    });
+  },
+
+  editLocal: function (data) {
+    var index = -1;
+    for (var i = 0; i < this.tastings.length; i++) {
+      if (this.tastings[i].key === data.key) {
+        index = i;
+      }
+    }
+    if (index > -1) {
+      this.tastings[index] = data;
+    }
+    this.notifyConsumers('edit', this.tastings);
+  },
+
+  editRemote: function (tasting) {
+    $.ajax({
+      method: 'PUT',
+      url: '/tastings/',
+      data: JSON.stringify(tasting),
+      success: function (data) {
+          this.editLocal(JSON.parse(data));
+      }.bind(this),
+        error: function (xhr, status, err) {
+          console.error('editRemote error');
+      }.bind(this)
+    });
   }
 };
 
@@ -51,17 +138,7 @@ var AddNewPanel = React.createClass({
       rating: Number(this.refs.rating.getValue())
     };
 
-    $.ajax({
-      method: 'POST',
-      url: '/tastings/',
-      data: JSON.stringify(newTasting),
-      success: function (data) {
-          eventDispatcher.addEvent(JSON.parse(data));
-      }.bind(this),
-        error: function (xhr, status, err) {
-          console.error('onSave error');
-      }.bind(this)
-    });
+    TastingStore.addRemote(newTasting);
 
     var mountNode = document.getElementById('new-tasting-panel');
     React.unmountComponentAtNode(mountNode);
@@ -117,6 +194,81 @@ var AddNewPanel = React.createClass({
   }
 });
 
+var EditPanel = React.createClass({
+  onCancel: function () {
+    var mountNode = document.getElementById('new-tasting-panel');
+    React.unmountComponentAtNode(mountNode);
+  },
+
+  onSave: function () {
+    var newTasting = {
+      key: this.props.item.key,
+      distillery: this.refs.distillery.getValue(),
+      name: this.refs.name.getValue(),
+      color: this.refs.color.getValue(),
+      nose: this.refs.nose.getValue(),
+      taste: this.refs.taste.getValue(),
+      finish: this.refs.finish.getValue(),
+      notes: this.refs.notes.getValue(),
+      rating: Number(this.refs.rating.getValue())
+    };
+
+    TastingStore.editRemote(newTasting);
+
+    var mountNode = document.getElementById('new-tasting-panel');
+    React.unmountComponentAtNode(mountNode);
+  },
+
+  render: function () {
+    return (
+        <Panel header='Add New Tasting...' key="addNewPanel1234">
+          <form>
+          <Table striped bordered condensed hover>
+            
+            <tbody>
+            <tr>
+                <th width="10%">Distillery</th>
+                <td><Input type="text" ref="distillery" defaultValue={this.props.item.distillery}/></td>
+              </tr>
+              <tr>
+                <th>Name</th>
+                <td><Input type="text" ref="name" defaultValue={this.props.item.name}/></td>
+              </tr>
+              <tr>
+                <th>Color</th>
+                <td><Input type="text" ref="color" defaultValue={this.props.item.color}/></td>
+              </tr>
+              <tr>
+                <th>Nose</th>
+                <td><Input type="text" ref="nose" defaultValue={this.props.item.nose}/></td>
+              </tr>
+              <tr>
+                <th>Taste</th>
+                <td><Input type="text" ref="taste" defaultValue={this.props.item.taste}/></td>
+              </tr>
+              <tr>
+                <th>Finish</th>
+                <td><Input type="text" ref="finish" defaultValue={this.props.item.finish}/></td>
+              </tr>
+              <tr>
+                <th>Notes</th>
+                <td><Input type="textarea" ref="notes" defaultValue={this.props.item.notes}/></td>
+              </tr>
+              <tr>
+                <th>Rating</th>
+                <td><Input type="text" ref="rating" defaultValue={this.props.item.rating}/></td>
+              </tr>
+            </tbody>
+            
+          </Table>
+          </form>
+          <Button bsStyle="danger" onClick={this.onCancel}>Cancel</Button>
+          <Button bsStyle="primary" onClick={this.onSave}>Save</Button>
+          </Panel>
+    );
+  }
+});
+
 var DeleteButton = React.createClass({
   getInitialState: function () {
     return {key: ''};
@@ -127,16 +279,7 @@ var DeleteButton = React.createClass({
   },
 
   handleDelete: function () {
-    $.ajax({
-      method: 'DELETE',
-      url: '/tastings/' + this.key,
-      success: function (data) {
-          eventDispatcher.deleteEvent(this.key);
-      }.bind(this),
-        error: function (xhr, status, err) {
-          console.error('handleDelete error');
-      }.bind(this)
-    });
+    TastingStore.deleteRemote(this.key);
   },
 
   render: function () {
@@ -146,51 +289,51 @@ var DeleteButton = React.createClass({
   }
 });
 
-var WhiskeyApp = React.createClass({
-  loadTastingsFromServer: function () {
-    $.ajax({url:'/tastings/',
-        type: 'GET',
-        dataType: 'json',
-        success: function (data) {
-          this.setState({items: data});
-        }.bind(this),
-        error: function (xhr, status, err) {
-          console.error('loadTastingsFromServer error');
-        }.bind(this)
-    });
-  },
-
-  onDeleteCallback: function(key) {
-    var index = -1;
-    for (var i = 0; i < this.state.items.length; i++) {
-      if (this.state.items[i].key === key) {
-        index = i;
-      }
-    }
-    if (index > -1) {
-      this.state.items.splice(index, 1);
-    }
-    this.forceUpdate();
-  },
-
-  onAddCallback: function(data) {
-
-    this.state.items.unshift(data);
-    this.forceUpdate();
-  },
-
+var EditButton = React.createClass({
   getInitialState: function () {
-    eventDispatcher.onAddEvent(this.onAddCallback);
-    eventDispatcher.onDeleteEvent(this.onDeleteCallback);
-    return {items: [], text: ''};
-  },
-
-  onChange: function (e) {
-    this.setState({text: e.target.value});
+    return {key: ''};
   },
 
   componentWillMount: function () {
-    this.loadTastingsFromServer();
+    this.key = this.props.key;
+  },
+
+  handleEdit: function () {
+    var mountNode = document.getElementById('new-tasting-panel');
+    React.renderComponent(<EditPanel item={this.props.item}/>, mountNode);
+  },
+
+  render: function () {
+    return (
+        <Button bsStyle="primary" onClick={this.handleEdit}>Edit</Button>
+    );
+  }
+});
+
+var WhiskeyApp = React.createClass({
+  getInitialState: function () {
+    var app = this;
+
+    TastingStore.addConsumer('load', function (data) {
+      app.setState({items: data})
+    });
+
+    TastingStore.addConsumer('add', function (data) {
+      app.replaceState({items: data})
+    });
+
+    TastingStore.addConsumer('edit', function (data) {
+      app.replaceState({items: data})
+    });
+
+    TastingStore.addConsumer('delete', function (data) {
+      app.replaceState({items: data})
+    });
+    return {items: []};
+  },
+
+  componentWillMount: function () {
+    TastingStore.load();
   },
 
   addNew: function () {
@@ -235,7 +378,9 @@ var WhiskeyApp = React.createClass({
                 </tr>
               </tbody>
             </Table>
-            <DeleteButton key={item.key}></DeleteButton>
+            <ButtonGroup>
+            <EditButton item={item}></EditButton><DeleteButton key={item.key}></DeleteButton>
+            </ButtonGroup>
             </Panel>
       );
     }.bind(this));
@@ -255,6 +400,5 @@ var WhiskeyApp = React.createClass({
   }
 });
 
-
+var mountNode = document.getElementById('app');
 React.renderComponent(<WhiskeyApp />, mountNode);
-
