@@ -35,9 +35,16 @@ var TastingStore = {
   },
 
   sort: function (sortProp) {
-    this.tastings.sort(function (a, b) {
-      return b[sortProp] < a[sortProp];
-    });
+    if (sortProp === 'rating') {
+      this.tastings.sort(function (a, b) {
+        return b[sortProp] > a[sortProp];
+      });
+    } else {
+      this.tastings.sort(function (a, b) {
+        return b[sortProp].toLowerCase() < a[sortProp].toLowerCase();
+      });
+    }
+    
     this.notifyConsumers('load', this.tastings);
   },
 
@@ -422,9 +429,9 @@ var WhiskeyApp = React.createClass({
         <ButtonToolbar>
           <Button bsStyle="primary" onClick={this.addNew}>Add New Tasting</Button>
           <DropdownButton bsStyle="primary" title="Sort...">
-            <MenuItem onClick={this.sortByName} key="1">Date</MenuItem>
-            <MenuItem onClick={this.sortByDate} key="2">Distillery</MenuItem>
-            <MenuItem onClick={this.sortByDistillery} key="3">Name</MenuItem>
+            <MenuItem onClick={this.sortByDate} key="1">Date</MenuItem>
+            <MenuItem onClick={this.sortByDistillery} key="2">Distillery</MenuItem>
+            <MenuItem onClick={this.sortByName} key="3">Name</MenuItem>
             <MenuItem onClick={this.sortByRating}key="4">Rating</MenuItem>
           </DropdownButton>
         </ButtonToolbar>
