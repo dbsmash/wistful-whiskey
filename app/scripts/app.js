@@ -13,6 +13,7 @@ var DropdownButton = require('react-bootstrap').DropdownButton;
 var MenuItem = require('react-bootstrap').MenuItem;
 
 var TastingStore = {
+  searchString: '',
   tastings: [],
   callbacks: {
     'add': [],
@@ -35,7 +36,7 @@ var TastingStore = {
   },
 
   sort: function (sortProp) {
-    if (sortProp === 'rating') {
+    if (sortProp === 'rating' || sortProp === 'date') {
       this.tastings.sort(function (a, b) {
         return b[sortProp] > a[sortProp];
       });
@@ -135,6 +136,26 @@ var TastingStore = {
         console.error('editRemote error');
       }.bind(this)
     });
+  },
+
+  search: function (searchString) {
+    this.searchString = searchString;
+    if (searchString === '') {
+      this.notifyConsumers('search', this.tastings);
+    }
+    var matches  = [];
+    for (var i = 0; i < this.tastings.length; i++) {
+      if (this.tastings[i].name.toLowerCase().indexOf(searchString) > -1) {
+        matches.push(this.tastings[i]);
+      } else if (this.tastings[i].distillery.toLowerCase().indexOf(searchString) > -1) {
+        matches.push(this.tastings[i]);
+      }
+    }
+    this.notifyConsumers('search', matches);
+  },
+
+  getTastings: function () {
+    return this.search(this.searchString);
   }
 };
 
@@ -341,14 +362,18 @@ var WhiskeyApp = React.createClass({
     });
 
     TastingStore.addConsumer('add', function (data) {
-      app.replaceState({items: data})
+      app.replaceState({items: TastingStore.getTastings()});
     });
 
     TastingStore.addConsumer('edit', function (data) {
-      app.replaceState({items: data})
+      app.replaceState({items: TastingStore.getTastings()});
     });
 
     TastingStore.addConsumer('delete', function (data) {
+      app.replaceState({items: TastingStore.getTastings()});
+    });
+
+    TastingStore.addConsumer('search', function (data) {
       app.replaceState({items: data})
     });
     return {items: []};
@@ -377,6 +402,10 @@ var WhiskeyApp = React.createClass({
 
   sortByRating: function () {
     TastingStore.sort('rating');
+  },
+
+  doSearch: function () {
+    TastingStore.search(this.refs.searchString.getValue().toLowerCase());
   },
 
   render: function() {
@@ -435,6 +464,7 @@ var WhiskeyApp = React.createClass({
             <MenuItem onClick={this.sortByRating}key="4">Rating</MenuItem>
           </DropdownButton>
         </ButtonToolbar>
+        <Input type="text" ref="searchString" placeholder="Search for matches..." onChange={this.doSearch}/>
 
         <div id="new-tasting-panel"/>
         <div id="tasting-panel">
