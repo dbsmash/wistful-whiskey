@@ -23,6 +23,17 @@ var TastingStore = {
     'load': []
   },
 
+  validateRating: function (tasting) {
+    if (tasting.rating === '') {
+      tasting.rating = 0;
+    }
+    if (isNaN(Number(tasting.rating)) || Number(tasting.rating) > 100 || Number(tasting.rating) < 0) {
+      alert('Please enter a numeric value (0 - 100) for rating.');
+      return false;
+    }
+    return true;
+  },
+
   addConsumer: function (type, callback) {
     var relevantCallbacks = this.callbacks[type];
     relevantCallbacks.push(callback);
@@ -177,6 +188,10 @@ var AddNewPanel = React.createClass({
       rating: Number(this.refs.rating.getValue())
     };
 
+    if (!TastingStore.validateRating(newTasting)) {
+      return;
+    }
+
     TastingStore.addRemote(newTasting);
 
     var mountNode = document.getElementById('new-tasting-panel');
@@ -220,7 +235,7 @@ var AddNewPanel = React.createClass({
               </tr>
               <tr>
                 <th>Rating</th>
-                <td><Input type="text" ref="rating"/></td>
+                <td><Input type="text" placeholder="x (out of 100)" ref="rating"/></td>
               </tr>
             </tbody>
             
@@ -253,6 +268,10 @@ var EditPanel = React.createClass({
       notes: this.refs.notes.getValue(),
       rating: Number(this.refs.rating.getValue())
     };
+
+    if (!TastingStore.validateRating(newTasting)) {
+      return;
+    }
 
     TastingStore.editRemote(newTasting);
 
@@ -297,7 +316,7 @@ var EditPanel = React.createClass({
               </tr>
               <tr>
                 <th>Rating</th>
-                <td><Input type="text" ref="rating" defaultValue={this.props.item.rating}/></td>
+                <td><Input type="text" ref="rating" placeholder="x (out of 100)"  defaultValue={this.props.item.rating}/></td>
               </tr>
             </tbody>
             
