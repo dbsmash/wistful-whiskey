@@ -20,10 +20,6 @@ gulp.task('styles', function () {
         .pipe($.connect.reload());
 });
 
-
-
-
-
 // Scripts
 gulp.task('scripts', function () {
     return gulp.src('app/scripts/app.js')
@@ -35,8 +31,6 @@ gulp.task('scripts', function () {
         .pipe($.size())
         .pipe($.connect.reload());
     });
-
-
 
 // HTML
 gulp.task('html', function () {
@@ -64,7 +58,6 @@ gulp.task('images', function () {
 gulp.task('clean', function () {
     return gulp.src(['dist/styles', 'dist/scripts', 'dist/images'], {read: false}).pipe($.clean());
 });
-
 
 // Bundle
 gulp.task('bundle', ['styles', 'scripts', 'bower'], function(){

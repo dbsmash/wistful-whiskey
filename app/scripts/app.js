@@ -47,13 +47,13 @@ var TastingStore = {
   },
 
   sort: function (sortProp) {
-    if (sortProp === 'rating' || sortProp === 'date') {
+    if (sortProp === 'rating') {
       this.tastings.sort(function (a, b) {
-        return b[sortProp] > a[sortProp];
+        return b.rating - a.rating;
       });
     } else {
       this.tastings.sort(function (a, b) {
-        return b[sortProp].toLowerCase() < a[sortProp].toLowerCase();
+        return a[sortProp].localeCompare(b[sortProp]);
       });
     }
     
@@ -480,10 +480,10 @@ var WhiskeyApp = React.createClass({
             <MenuItem onClick={this.sortByDate} key="1">Date</MenuItem>
             <MenuItem onClick={this.sortByDistillery} key="2">Distillery</MenuItem>
             <MenuItem onClick={this.sortByName} key="3">Name</MenuItem>
-            <MenuItem onClick={this.sortByRating}key="4">Rating</MenuItem>
+            <MenuItem onClick={this.sortByRating} key="4">Rating</MenuItem>
           </DropdownButton>
         </ButtonToolbar>
-        <Input type="text" ref="searchString" placeholder="Search for matches..." onChange={this.doSearch}/>
+        <Input type="text" ref="searchString" placeholder="Search your reviews..." onChange={this.doSearch}/>
 
         <div id="new-tasting-panel"/>
         <div id="tasting-panel">
