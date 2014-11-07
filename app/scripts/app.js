@@ -430,8 +430,17 @@ var WhiskeyApp = React.createClass({
   render: function() {
     var gameNodes = this.state.items.map(function (item) {
       var formattedDate = item.date.substring(0, 10);
+      var header = item.distillery + ' ' + item.name;
+      var inc = '';
+      for (var property in item) {
+        if (item.hasOwnProperty(property)) {
+            if (!item[property] && property !== 'age') {
+              inc = ' *';
+            }
+        }
+      }
       return (
-            <Panel header={item.distillery + ' ' + item.name} key={item.key}>
+            <Panel header={header+inc} key={item.key}>
             <Table striped bordered condensed hover>
               <tbody>
                 <tr>
@@ -491,6 +500,7 @@ var WhiskeyApp = React.createClass({
             {gameNodes}
           </Accordion>
         </div>
+        Showing {this.state.items.length} spirits
       </div>
     );
   }
