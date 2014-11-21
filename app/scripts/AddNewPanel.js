@@ -8,11 +8,17 @@ var ButtonToolbar = require('react-bootstrap').ButtonToolbar;
 var Input = require('react-bootstrap').Input;
 
 var AddNewPanel = React.createClass({
+  /**
+    * removes the AddNewPanel from the DOM, since the user wanted to cancel
+    */
   onCancel: function () {
     var mountNode = document.getElementById('new-tasting-panel');
     React.unmountComponentAtNode(mountNode);
   },
 
+  /**
+    * uses form values to create a newTasting object and request the TastingStore save it.
+    */
   onSave: function () {
     var newTasting = {
       distillery: this.refs.distillery.getValue(),
@@ -35,6 +41,9 @@ var AddNewPanel = React.createClass({
     React.unmountComponentAtNode(mountNode);
   },
 
+  /**
+    * REACT render 
+    */
   render: function () {
     return (
         <Panel header='Add New Tasting...' key="addNewPanel1234">

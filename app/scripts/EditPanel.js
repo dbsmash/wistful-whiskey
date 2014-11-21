@@ -8,11 +8,18 @@ var ButtonToolbar = require('react-bootstrap').ButtonToolbar;
 var Input = require('react-bootstrap').Input;
 
 var EditPanel = React.createClass({
+
+  /**
+    * handles an EditPanel cancel, but unmounting the component from the DOM
+    */
   onCancel: function () {
     var mountNode = document.getElementById('new-tasting-panel');
     React.unmountComponentAtNode(mountNode);
   },
 
+  /**
+    * Uses form data to build up a new tasting object, and then requests the store save the edits
+    */
   onSave: function () {
     var newTasting = {
       key: this.props.item.key,
@@ -36,6 +43,9 @@ var EditPanel = React.createClass({
     React.unmountComponentAtNode(mountNode);
   },
 
+  /**
+    * REACT render
+    */
   render: function () {
     return (
         <Panel header='Add New Tasting...' key="addNewPanel1234">
