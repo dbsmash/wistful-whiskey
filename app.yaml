@@ -1,6 +1,6 @@
 application: wistful-whiskey
 module: default
-version: 6
+version: 10
 runtime: go
 api_version: go1
 

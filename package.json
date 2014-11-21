@@ -17,10 +17,14 @@
     "gulp-ruby-sass": "~0.3.0",
     "gulp-connect": "~1.0.0",
     "gulp-useref": "~0.4.4",
-    "gulp-browserify": "~0.4.6",
+    "browserify": "",
+    "gulp-concat":"2.4.2",
+    "gulp-uglify":"",
+    "gulp-rename":"",
     "reactify": "~0.10.0",
     "react": "^0.10.0",
-    "react-bootstrap": "0.12.0"
+    "react-bootstrap": "0.12.0",
+    "vinyl-source-stream":""
   },
   "engines": {
     "node": ">=0.10.0"
