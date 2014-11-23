@@ -28,6 +28,7 @@ var AddNewPanel = React.createClass({
       taste: this.refs.taste.getValue(),
       finish: this.refs.finish.getValue(),
       notes: this.refs.notes.getValue(),
+      image_url: this.refs.image_url.getValue(),
       rating: Number(this.refs.rating.getValue())
     };
 
@@ -82,6 +83,10 @@ var AddNewPanel = React.createClass({
               <tr>
                 <th>Rating</th>
                 <td><Input type="text" placeholder="x (out of 100)" ref="rating"/></td>
+              </tr>
+              <tr>
+                <th>Image</th>
+                <td><Input type="text" placeholder="url of image" ref="image_url"/></td>
               </tr>
             </tbody>
             

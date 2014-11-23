@@ -35,6 +35,7 @@ type Tasting struct {
 	Finish     		  string         `datastore:"finish" json:"finish"`
 	Notes     		  string         `datastore:"notes" json:"notes"`
 	Rating            int            `datastore:"rating" json:"rating"`
+	Image_url         string         `datastore:"image_url" json:"image_url"`
 	Key               *datastore.Key `datastore:"-" json:"key"`
 }
 

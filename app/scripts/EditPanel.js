@@ -30,6 +30,7 @@ var EditPanel = React.createClass({
       taste: this.refs.taste.getValue(),
       finish: this.refs.finish.getValue(),
       notes: this.refs.notes.getValue(),
+      image_url: this.refs.image_url.getValue(),
       rating: Number(this.refs.rating.getValue())
     };
 
@@ -84,6 +85,10 @@ var EditPanel = React.createClass({
               <tr>
                 <th>Rating</th>
                 <td><Input type="text" ref="rating" placeholder="x (out of 100)"  defaultValue={this.props.item.rating}/></td>
+              </tr>
+              <tr>
+                <th>Image</th>
+                <td><Input type="text" placeholder="url of image" ref="image_url" defaultValue={this.props.item.image_url}/></td>
               </tr>
             </tbody>
             

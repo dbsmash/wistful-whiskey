@@ -117,6 +117,10 @@ var WhiskeyApp = React.createClass({
                   <th>Rating</th>
                   <td>{item.rating} / 100</td>
                 </tr>
+                <tr>
+                  <th>Image</th>
+                  <td><img src={item.image_url} height="200px"/></td>
+                </tr>
               </tbody>
             </Table>
             <ButtonToolbar>
